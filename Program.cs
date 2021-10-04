@@ -6,6 +6,7 @@ namespace web_server
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("Start server on port :80 ...");
             new Server();
         }
     }

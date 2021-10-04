@@ -11,6 +11,7 @@ static class Constants
     public const int StatusForbidden = 403;
     public const int StatusMethodNotAllowed = 405;
     public const int StatusNotFound = 404;
+    public const int StatusInternal = 500;
 }
 
 
@@ -118,7 +119,24 @@ namespace web_server {
 
             }
 
-            FileStream file = new FileStream(path.Substring(1), FileMode.Open, FileAccess.Read, FileShare.Read);
+            FileStream file;
+            try {
+                file = new FileStream(path.Substring(1), FileMode.Open, FileAccess.Read, FileShare.Read);
+            } 
+            catch(Exception)
+            {
+                status = Constants.StatusInternal;
+                var html = $"<html><body><h1>{status}</h1></body></html>";
+                contentType = "text/html";
+                resp = $"HTTP/1.1 {status} " + ((HttpStatusCode)status).ToString() + "\r\nServer: web_server 1.0.0\r\nDate:" + DateTime.Now.ToString() + "\r\nConnection: keep-alive"+ $"\r\nContent-Type:{contentType}" + $"\r\nContent-length:{html.Length}" + "\r\n\r\n";
+
+                if (method != "HEAD") {
+                    resp += html;
+                }
+                respBody =  Encoding.ASCII.GetBytes(resp);
+                client.GetStream().Write(respBody, 0, respBody.Length);
+                return;
+            }
             resp = $"HTTP/1.1 {status} " + ((HttpStatusCode)status).ToString() + "\r\nServer: web_server 1.0.0\r\nDate:" + DateTime.Now.ToString() + "\r\nConnection: keep-alive"+ $"\r\nContent-Type:{contentType}" + $"\r\nContent-length:{file.Length}" + "\r\n\r\n";
             respBody =  Encoding.ASCII.GetBytes(resp);
             client.GetStream().Write(respBody, 0, respBody.Length);
